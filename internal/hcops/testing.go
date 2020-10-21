@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/hetznercloud/hcloud-cloud-controller-manager/internal/mocks"
+	"github.com/cluster-api-provider-hcloud/hcloud-cloud-controller-manager/internal/mocks"
 	"github.com/hetznercloud/hcloud-go/hcloud"
 )
 

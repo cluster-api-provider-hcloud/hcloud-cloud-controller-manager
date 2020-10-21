@@ -28,7 +28,7 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/cmd/cloud-controller-manager/app"
 
-	_ "github.com/hetznercloud/hcloud-cloud-controller-manager/hcloud"
+	_ "github.com/cluster-api-provider-hcloud/hcloud-cloud-controller-manager/hcloud"
 	_ "k8s.io/component-base/metrics/prometheus/clientgo" // load all the prometheus client-go plugins
 	_ "k8s.io/component-base/metrics/prometheus/version"  // for version metric registration
 )

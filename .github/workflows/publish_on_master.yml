@@ -11,12 +11,12 @@ jobs:
         with:
           go-version: '1.15'
       - uses: actions/checkout@master
-      - name: Publish latest tag to registry
+      - name: Add docker push secret
+        run: 'umask 0077 && mkdir -p ~/.docker/ && echo "$DOCKER_AUTH_CONFIG" > ~/.docker/config.json'
+        shell: bash
         env:
-            DOCKER_USER: ${{ secrets.DOCKER_USER }}
-            DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_AUTH_CONFIG: ${{secrets.DOCKER_AUTH_CONFIG}}
+      - name: Publish latest tag to registry
         run: |
-          docker version
-          docker login -u "$DOCKER_USER" -p "$DOCKER_PASSWORD"
-          docker build -t hetznercloud/hcloud-cloud-controller-manager:latest .
-          docker push hetznercloud/hcloud-cloud-controller-manager:latest
+          docker build -t cluster-api-provider-hcloud/hcloud-cloud-controller-manager:latest .
+          docker push cluster-api-provider-hcloud/hcloud-cloud-controller-manager:latest

@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/hetznercloud/hcloud-cloud-controller-manager/internal/annotation"
-	"github.com/hetznercloud/hcloud-cloud-controller-manager/internal/hcops"
+	"github.com/cluster-api-provider-hcloud/hcloud-cloud-controller-manager/internal/annotation"
+	"github.com/cluster-api-provider-hcloud/hcloud-cloud-controller-manager/internal/hcops"
 	"github.com/hetznercloud/hcloud-go/hcloud"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"

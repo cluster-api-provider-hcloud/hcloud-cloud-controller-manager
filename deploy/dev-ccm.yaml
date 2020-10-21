@@ -54,11 +54,11 @@ spec:
         - key: "node.kubernetes.io/not-ready"
           effect: "NoSchedule"
       containers:
-        - image: hetznercloud/hcloud-cloud-controller-manager:latest
+        - image: capihcloud/hcloud-cloud-controller-manager:latest
           name: hcloud-cloud-controller-manager
           command:
             - "/bin/hcloud-cloud-controller-manager"
-            - "--cloud-provider=hcloud"
+            - "--cloud-provider=hetzner"
             - "--leader-elect=false"
             - "--allow-untagged-cloud"
           resources:
@@ -73,5 +73,15 @@ spec:
             - name: HCLOUD_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: hcloud
+                  name: hetzner-token
                   key: token
+            - name: HROBOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: bm-token
+                  key: robot-user
+            - name: HROBOT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: bm-token
+                  key: robot-password

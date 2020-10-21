@@ -27,35 +27,42 @@ import (
 
 	"github.com/hetznercloud/hcloud-go/hcloud"
 	"github.com/hetznercloud/hcloud-go/hcloud/schema"
+	hrobot "github.com/nl2go/hrobot-go"
 	"github.com/stretchr/testify/assert"
 )
 
 type testEnv struct {
 	Server *httptest.Server
 	Mux    *http.ServeMux
-	Client *hcloud.Client
+	Client commonClient
 }
 
 func (env *testEnv) Teardown() {
 	env.Server.Close()
 	env.Server = nil
 	env.Mux = nil
-	env.Client = nil
+	env.Client.Hcloud = nil
+	env.Client.Hrobot = nil
 }
 
 func newTestEnv() testEnv {
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
-	client := hcloud.NewClient(
+	hcloudClient := hcloud.NewClient(
 		hcloud.WithEndpoint(server.URL),
 		hcloud.WithToken("jr5g7ZHpPptyhJzZyHw2Pqu4g9gTqDvEceYpngPf79jNZXCeTYQ4uArypFM3nh75"),
 		hcloud.WithBackoffFunc(func(_ int) time.Duration { return 0 }),
 		hcloud.WithDebugWriter(os.Stdout),
 	)
+	hrobotClient := hrobot.NewBasicAuthClient("user", "pass")
+
 	return testEnv{
 		Server: server,
 		Mux:    mux,
-		Client: client,
+		Client: commonClient{
+			Hrobot: hrobotClient,
+			Hcloud: hcloudClient,
+		},
 	}
 }
 
@@ -67,6 +74,9 @@ func TestNewCloud(t *testing.T) {
 		"HCLOUD_ENDPOINT", env.Server.URL,
 		"HCLOUD_TOKEN", "jr5g7ZHpPptyhJzZyHw2Pqu4g9gTqDvEceYpngPf79jN_NOT_VALID_dzhepnahq",
 		"NODE_NAME", "test",
+		"HROBOT_USER", "test-user",
+		"HROBOT_PASS", "invalid_password",
+		"HROBOT_PERIOD", "180",
 	)
 	defer resetEnv()
 	env.Mux.HandleFunc("/servers", func(w http.ResponseWriter, r *http.Request) {

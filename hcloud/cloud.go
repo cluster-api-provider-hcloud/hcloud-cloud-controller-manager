@@ -20,15 +20,23 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 
-	"github.com/hetznercloud/hcloud-cloud-controller-manager/internal/hcops"
+	"github.com/cluster-api-provider-hcloud/hcloud-cloud-controller-manager/internal/hcops"
 	"github.com/hetznercloud/hcloud-go/hcloud"
+	hrobot "github.com/nl2go/hrobot-go"
 	cloudprovider "k8s.io/cloud-provider"
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 )
 
 const (
+	hrobotUserENVVar                 = "HROBOT_USER"
+	hrobotPassENVVar                 = "HROBOT_PASS"
+	hrobotPeriodENVVar               = "HROBOT_PERIOD"
 	hcloudTokenENVVar                = "HCLOUD_TOKEN"
 	hcloudEndpointENVVar             = "HCLOUD_ENDPOINT"
 	hcloudNetworkENVVar              = "HCLOUD_NETWORK"
@@ -39,14 +47,32 @@ const (
 	providerVersion                  = "v1.8.0"
 )
 
+var (
+	hrobotPeriod = 180
+)
+
+type commonClient struct {
+	Hrobot hrobot.RobotClient
+	Hcloud *hcloud.Client
+}
 type cloud struct {
-	client       *hcloud.Client
+	client       commonClient
 	instances    *instances
 	zones        *zones
-	routes       *routes
 	loadBalancer *loadBalancers
 	networkID    int
 }
+
+type HrobotServer struct {
+	ID     int
+	Name   string
+	Type   string
+	Zone   string
+	Region string
+	IP     net.IP
+}
+
+var hrobotServers []HrobotServer
 
 func newCloud(config io.Reader) (cloudprovider.Interface, error) {
 	const op = "hcloud/newCloud"
@@ -73,11 +99,33 @@ func newCloud(config io.Reader) (cloudprovider.Interface, error) {
 	if endpoint := os.Getenv(hcloudEndpointENVVar); endpoint != "" {
 		opts = append(opts, hcloud.WithEndpoint(endpoint))
 	}
-	client := hcloud.NewClient(opts...)
+
+	// hetzner robot get auth from env
+	user := os.Getenv(hrobotUserENVVar)
+	if user == "" {
+		return nil, fmt.Errorf("environment variable %q is required", hrobotUserENVVar)
+	}
+	pass := os.Getenv(hrobotPassENVVar)
+	if pass == "" {
+		return nil, fmt.Errorf("environment variable %q is required", hrobotPassENVVar)
+	}
+
+	period := os.Getenv(hrobotPeriodENVVar)
+	if period == "" {
+		hrobotPeriod = 180
+	} else {
+		hrobotPeriod, _ = strconv.Atoi(period)
+	}
+
+	var client commonClient
+	client.Hcloud = hcloud.NewClient(opts...)
+	client.Hrobot = hrobot.NewBasicAuthClient(user, pass)
+
+	readHrobotServers(client.Hrobot)
 
 	var networkID int
 	if v, ok := os.LookupEnv(hcloudNetworkENVVar); ok {
-		n, _, err := client.Network.Get(context.Background(), v)
+		n, _, err := client.Hcloud.Network.Get(context.Background(), v)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
@@ -90,20 +138,20 @@ func newCloud(config io.Reader) (cloudprovider.Interface, error) {
 		klog.Infof("%s: %s empty", op, hcloudNetworkENVVar)
 	}
 
-	_, _, err := client.Server.List(context.Background(), hcloud.ServerListOpts{})
+	_, _, err := client.Hcloud.Server.List(context.Background(), hcloud.ServerListOpts{})
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	fmt.Printf("Hetzner Cloud k8s cloud controller %s started\n", providerVersion)
 
 	lbOps := &hcops.LoadBalancerOps{
-		LBClient:      &client.LoadBalancer,
-		ActionClient:  &client.Action,
-		NetworkClient: &client.Network,
+		LBClient:      &client.Hcloud.LoadBalancer,
+		ActionClient:  &client.Hcloud.Action,
+		NetworkClient: &client.Hcloud.Network,
 		NetworkID:     networkID,
 	}
 
-	loadBalancers := newLoadBalancers(lbOps, &client.LoadBalancer, &client.Action)
+	loadBalancers := newLoadBalancers(lbOps, &client.Hcloud.LoadBalancer, &client.Hcloud.Action)
 	if os.Getenv(hcloudLoadBalancersEnabledENVVar) == "false" {
 		loadBalancers = nil
 	}
@@ -112,12 +160,37 @@ func newCloud(config io.Reader) (cloudprovider.Interface, error) {
 		zones:        newZones(client, nodeName),
 		instances:    newInstances(client),
 		loadBalancer: loadBalancers,
-		routes:       nil,
 		networkID:    networkID,
 	}, nil
 }
 
 func (c *cloud) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, stop <-chan struct{}) {
+}
+
+func readHrobotServers(hrobot hrobot.RobotClient) {
+	go func() {
+		for {
+			servers, err := hrobot.ServerGetList()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "ERROR: get servers from hrobot: %v\n", err)
+			}
+			var hservers []HrobotServer
+			for _, s := range servers {
+				zone := strings.ToLower(strings.Split(s.Dc, "-")[0])
+				server := HrobotServer{
+					ID:     s.ServerNumber,
+					Name:   s.ServerName,
+					Type:   s.Product,
+					Zone:   zone,
+					Region: strings.ToLower(s.Dc),
+					IP:     net.ParseIP(s.ServerIP),
+				}
+				hservers = append(hservers, server)
+			}
+			hrobotServers = hservers
+			time.Sleep(time.Duration(hrobotPeriod) * time.Second)
+		}
+	}()
 }
 
 func (c *cloud) Instances() (cloudprovider.Instances, bool) {
@@ -140,15 +213,7 @@ func (c *cloud) Clusters() (cloudprovider.Clusters, bool) {
 }
 
 func (c *cloud) Routes() (cloudprovider.Routes, bool) {
-	if c.networkID > 0 {
-		r, err := newRoutes(c.client, c.networkID)
-		if err != nil {
-			klog.ErrorS(err, "create routes provider", "networkID", c.networkID)
-			return nil, false
-		}
-		return r, true
-	}
-	return nil, false // If no network is configured, disable the routes part
+	return nil, false
 }
 
 func (c *cloud) ProviderName() string {

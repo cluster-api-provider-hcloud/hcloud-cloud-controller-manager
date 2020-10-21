@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hetznercloud/hcloud-cloud-controller-manager/internal/annotation"
+	"github.com/cluster-api-provider-hcloud/hcloud-cloud-controller-manager/internal/annotation"
 	"github.com/hetznercloud/hcloud-go/hcloud"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"

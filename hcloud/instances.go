@@ -29,10 +29,10 @@ import (
 )
 
 type instances struct {
-	client *hcloud.Client
+	client commonClient
 }
 
-func newInstances(client *hcloud.Client) *instances {
+func newInstances(client commonClient) *instances {
 	return &instances{client}
 }
 
@@ -122,7 +122,10 @@ func (i instances) InstanceExistsByProviderID(ctx context.Context, providerID st
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 
-	server, _, err := i.client.Server.GetByID(ctx, id)
+	server, _, err := i.client.Hcloud.Server.GetByID(ctx, id)
+	if server == nil {
+		server, err = hrobotGetServerByID(id)
+	}
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
@@ -137,7 +140,10 @@ func (i instances) InstanceShutdownByProviderID(ctx context.Context, providerID 
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 
-	server, _, err := i.client.Server.GetByID(ctx, id)
+	server, _, err := i.client.Hcloud.Server.GetByID(ctx, id)
+	if server == nil {
+		server, err = hrobotGetServerByID(id)
+	}
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
@@ -153,7 +159,7 @@ func (i *instances) nodeAddresses(ctx context.Context, server *hcloud.Server) []
 	)
 	n := os.Getenv(hcloudNetworkENVVar)
 	if len(n) > 0 {
-		network, _, _ := i.client.Network.Get(ctx, n)
+		network, _, _ := i.client.Hcloud.Network.Get(ctx, n)
 		if network != nil {
 			for _, privateNet := range server.PrivateNet {
 				if privateNet.Network.ID == network.ID {

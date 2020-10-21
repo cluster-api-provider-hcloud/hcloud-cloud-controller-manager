@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/hetznercloud/hcloud-cloud-controller-manager/internal/annotation"
-	"github.com/hetznercloud/hcloud-cloud-controller-manager/internal/hcops"
+	"github.com/cluster-api-provider-hcloud/hcloud-cloud-controller-manager/internal/annotation"
+	"github.com/cluster-api-provider-hcloud/hcloud-cloud-controller-manager/internal/hcops"
 	"github.com/hetznercloud/hcloud-go/hcloud"
 	"github.com/hetznercloud/hcloud-go/hcloud/schema"
 	"github.com/stretchr/testify/assert"
@@ -45,10 +45,10 @@ func TestLoadBalancers_GetLoadBalancer(t *testing.T) {
 	})
 
 	lbOps := &hcops.LoadBalancerOps{
-		LBClient:     &env.Client.LoadBalancer,
-		ActionClient: &env.Client.Action,
+		LBClient:     &env.Client.Hcloud.LoadBalancer,
+		ActionClient: &env.Client.Hcloud.Action,
 	}
-	loadBalancers := newLoadBalancers(lbOps, &env.Client.LoadBalancer, &env.Client.Action)
+	loadBalancers := newLoadBalancers(lbOps, &env.Client.Hcloud.LoadBalancer, &env.Client.Hcloud.Action)
 	status, exists, err := loadBalancers.GetLoadBalancer(context.Background(), "my-cluster", &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			UID:         "foobar",
@@ -117,10 +117,10 @@ func TestLoadBalancers_GetLoadBalancerHostnameAnnotation(t *testing.T) {
 	})
 
 	lbOps := &hcops.LoadBalancerOps{
-		LBClient:     &env.Client.LoadBalancer,
-		ActionClient: &env.Client.Action,
+		LBClient:     &env.Client.Hcloud.LoadBalancer,
+		ActionClient: &env.Client.Hcloud.Action,
 	}
-	loadBalancers := newLoadBalancers(lbOps, &env.Client.LoadBalancer, &env.Client.Action)
+	loadBalancers := newLoadBalancers(lbOps, &env.Client.Hcloud.LoadBalancer, &env.Client.Hcloud.Action)
 	status, exists, err := loadBalancers.GetLoadBalancer(context.Background(), "my-cluster", &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			UID: "foobar",
@@ -203,10 +203,10 @@ func TestLoadBalancers_EnsureLoadBalancerDeleted(t *testing.T) {
 	})
 
 	lbOps := &hcops.LoadBalancerOps{
-		LBClient:     &env.Client.LoadBalancer,
-		ActionClient: &env.Client.Action,
+		LBClient:     &env.Client.Hcloud.LoadBalancer,
+		ActionClient: &env.Client.Hcloud.Action,
 	}
-	loadBalancers := newLoadBalancers(lbOps, &env.Client.LoadBalancer, &env.Client.Action)
+	loadBalancers := newLoadBalancers(lbOps, &env.Client.Hcloud.LoadBalancer, &env.Client.Hcloud.Action)
 	err := loadBalancers.EnsureLoadBalancerDeleted(context.Background(), "my-cluster", &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			UID:         "foobar",
@@ -272,10 +272,10 @@ func TestLoadBalancers_EnsureLoadBalancerDeletedWithProtectection(t *testing.T) 
 	})
 
 	lbOps := &hcops.LoadBalancerOps{
-		LBClient:     &env.Client.LoadBalancer,
-		ActionClient: &env.Client.Action,
+		LBClient:     &env.Client.Hcloud.LoadBalancer,
+		ActionClient: &env.Client.Hcloud.Action,
 	}
-	loadBalancers := newLoadBalancers(lbOps, &env.Client.LoadBalancer, &env.Client.Action)
+	loadBalancers := newLoadBalancers(lbOps, &env.Client.Hcloud.LoadBalancer, &env.Client.Hcloud.Action)
 	err := loadBalancers.EnsureLoadBalancerDeleted(context.Background(), "my-cluster", &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			UID:         "foobar",
@@ -412,10 +412,10 @@ func TestLoadBalancers_EnsureLoadBalancerCreate(t *testing.T) {
 	})
 
 	lbOps := &hcops.LoadBalancerOps{
-		LBClient:     &env.Client.LoadBalancer,
-		ActionClient: &env.Client.Action,
+		LBClient:     &env.Client.Hcloud.LoadBalancer,
+		ActionClient: &env.Client.Hcloud.Action,
 	}
-	loadBalancers := newLoadBalancers(lbOps, &env.Client.LoadBalancer, &env.Client.Action)
+	loadBalancers := newLoadBalancers(lbOps, &env.Client.Hcloud.LoadBalancer, &env.Client.Hcloud.Action)
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			UID: "foobar",
@@ -595,10 +595,10 @@ func TestLoadBalancers_EnsureLoadBalancerUpdate(t *testing.T) {
 	})
 
 	lbOps := &hcops.LoadBalancerOps{
-		LBClient:     &env.Client.LoadBalancer,
-		ActionClient: &env.Client.Action,
+		LBClient:     &env.Client.Hcloud.LoadBalancer,
+		ActionClient: &env.Client.Hcloud.Action,
 	}
-	loadBalancers := newLoadBalancers(lbOps, &env.Client.LoadBalancer, &env.Client.Action)
+	loadBalancers := newLoadBalancers(lbOps, &env.Client.Hcloud.LoadBalancer, &env.Client.Hcloud.Action)
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			UID: "foobar",

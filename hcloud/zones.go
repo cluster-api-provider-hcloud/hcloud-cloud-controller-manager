@@ -26,11 +26,11 @@ import (
 )
 
 type zones struct {
-	client   *hcloud.Client
+	client   commonClient
 	nodeName string // name of the node the programm is running on
 }
 
-func newZones(client *hcloud.Client, nodeName string) *zones {
+func newZones(client commonClient, nodeName string) *zones {
 	return &zones{client, nodeName}
 }
 
