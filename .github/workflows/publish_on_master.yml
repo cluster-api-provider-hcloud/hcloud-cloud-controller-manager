@@ -18,5 +18,5 @@ jobs:
           DOCKER_AUTH_CONFIG: ${{secrets.DOCKER_AUTH_CONFIG}}
       - name: Publish latest tag to registry
         run: |
-          docker build -t cluster-api-provider-hcloud/hcloud-cloud-controller-manager:latest .
-          docker push cluster-api-provider-hcloud/hcloud-cloud-controller-manager:latest
+          docker build -t capihcloud/hcloud-cloud-controller-manager:latest .
+          docker push capihcloud/hcloud-cloud-controller-manager:latest

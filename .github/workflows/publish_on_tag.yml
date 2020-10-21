@@ -20,5 +20,5 @@
 #         run: |
 #           docker version
 #           docker login -u "$DOCKER_USER" -p "$DOCKER_PASSWORD"
-#           docker build -t cluster-api-provider-hcloud/hcloud-cloud-controller-manager:$RELEASE_VERSION .
-#           docker push cluster-api-provider-hcloud/hcloud-cloud-controller-manager:$RELEASE_VERSION
+#           docker build -t capihcloud/hcloud-cloud-controller-manager:$RELEASE_VERSION .
+#           docker push capihcloud/hcloud-cloud-controller-manager:$RELEASE_VERSION
