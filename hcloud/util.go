@@ -111,7 +111,10 @@ func hrobotGetServerByID(id int) (*hcloud.Server, error) {
 				PublicNet:  hcloud.ServerPublicNet{IPv4: hcloud.ServerPublicNetIPv4{IP: s.IP}},
 				ServerType: &hcloud.ServerType{Name: s.Type},
 				Status:     hcloud.ServerStatus("running"),
-				Datacenter: &hcloud.Datacenter{Location: &hcloud.Location{Name: s.Zone}, Name: s.Region},
+				Datacenter: &hcloud.Datacenter{Location: &hcloud.Location{
+					Name:        s.Zone,
+					NetworkZone: hcloud.NetworkZoneEUCentral},
+					Name: s.Region},
 			}
 			return server, nil
 		}
