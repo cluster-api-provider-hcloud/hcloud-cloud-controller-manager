@@ -72,8 +72,11 @@ func (z zones) GetZoneByNodeName(ctx context.Context, nodeName types.NodeName) (
 }
 
 func zoneFromServer(server *hcloud.Server) cloudprovider.Zone {
+
+	zone := server.Datacenter.Location.Name[:3]
+	region := server.Datacenter.Location.NetworkZone
 	return cloudprovider.Zone{
-		Region:        server.Datacenter.Location.Name,
-		FailureDomain: server.Datacenter.Name,
+		Region:        region,
+		FailureDomain: zone,
 	}
 }
